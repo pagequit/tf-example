@@ -1,0 +1,21 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": ["eslint:recommended", "prettier"],
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-console": "off",
+        "no-eval": "error",
+        "no-implied-eval": "error",
+        "no-unused-vars": ["warn", { "args": "none" }],
+        "linebreak-style": ["warn", "unix"],
+        "quotes": ["warn", "double", { "avoidEscape": true }],
+        "semi": ["warn", "always"]
+    }
+}
