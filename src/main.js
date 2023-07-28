@@ -1,15 +1,54 @@
-import * as tf from "@tensorflow/tfjs";
+import "./style/main.scss";
+import "@tensorflow/tfjs";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
 
-const model = tf.sequential();
+const video = document.createElement("video");
+video.autoplay = true;
+video.muted = true;
+video.width = 640;
+video.height = 480;
 
-model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
+const container = document.createElement("div");
+container.appendChild(video);
+document.body.appendChild(container);
 
-model.compile({ loss: "meanSquaredError", optimizer: "sgd" });
+const script = document.createElement("script");
+script.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd";
+script.onload = main;
+document.body.appendChild(script);
 
-const xs = tf.tensor2d([1, 2, 3, 4], [4, 1]);
-const ys = tf.tensor2d([1, 3, 5, 7], [4, 1]);
+let model = null;
+const detected = [];
 
-(async function main() {
-    await model.fit(xs, ys);
-    model.predict(tf.tensor2d([5], [1, 1])).print();
-})();
+function detect() {
+    model.detect(video).then((predictions) => {
+        for (let i = 0; i < detected.length; i++) {
+            container.removeChild(detected[i]);
+        }
+        detected.splice(0);
+
+        for (const prediction of predictions) {
+            if (prediction.score > 0.75) {
+                const marker = document.createElement("span");
+                marker.innerText = `
+                    ${prediction.class} (${Math.round(
+                        parseFloat(prediction.score) * 100,
+                    )}%)
+                `;
+                marker.style = `color:white;`;
+
+                container.appendChild(marker);
+                detected.push(marker);
+            }
+        }
+
+        window.requestAnimationFrame(detect);
+    });
+}
+
+async function main() {
+    model = await cocoSsd.load();
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    video.addEventListener("loadeddata", detect);
+};
