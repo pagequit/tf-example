@@ -1,6 +1,17 @@
-body {
-    background: #2b3a42;
+@use "./reboot.scss";
+
+.app {
+    background-color: var(--bs-body-bg);
+    width: 100vw;
+    height: 100vh;
 }
 
-video {
+.video-inference {
+    position: relative;
+
+    &__marker {
+        position: absolute;
+        border: 1px solid var(--bs-code-color);
+        color: var(--bs-code-color);
+    }
 }

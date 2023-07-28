@@ -9,36 +9,53 @@ video.width = 640;
 video.height = 480;
 
 const container = document.createElement("div");
+container.classList.add("video-inference");
 container.appendChild(video);
-document.body.appendChild(container);
+
+const app = document.createElement("div");
+app.classList.add("app");
+app.dataset.bsTheme = "dark";
+
+app.appendChild(container);
 
 const script = document.createElement("script");
 script.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd";
 script.onload = main;
-document.body.appendChild(script);
+app.appendChild(script);
+
+document.body.appendChild(app);
+
+const marker = document.createElement("div");
+marker.classList.add("video-inference__marker");
+const markers = new Array(6).fill(null).reduce((acc, _) => {
+    const clone = marker.cloneNode();
+    container.appendChild(clone);
+    acc.push(clone);
+
+    return acc;
+}, []);
 
 let model = null;
-const detected = [];
 
 function detect() {
-    model.detect(video).then((predictions) => {
-        for (let i = 0; i < detected.length; i++) {
-            container.removeChild(detected[i]);
-        }
-        detected.splice(0);
+    model.detect(video).then((inferences) => {
+        for (const index in markers) {
+            const marker = markers[index];
+            const inference = inferences[index];
 
-        for (const prediction of predictions) {
-            if (prediction.score > 0.75) {
-                const marker = document.createElement("span");
-                marker.innerText = `
-                    ${prediction.class} (${Math.round(
-                        parseFloat(prediction.score) * 100,
-                    )}%)
+            marker.innerText = "";
+            marker.style = "left:0; top:0; width:0; height:0;";
+
+            if (inference && inference.score > 0.67) {
+                marker.innerText = ` - ${inference.class} (${Math.round(
+                    parseFloat(inference.score) * 100,
+                )}%)`;
+                marker.style = `
+                    left: ${parseInt(Math.round(inference.bbox[0]))}px;
+                    top: ${parseInt(Math.round(inference.bbox[1]))}px;
+                    width: ${parseInt(Math.round(inference.bbox[2]))}px;
+                    height: ${parseInt(Math.round(inference.bbox[3]))}px;
                 `;
-                marker.style = `color:white;`;
-
-                container.appendChild(marker);
-                detected.push(marker);
             }
         }
 
@@ -51,4 +68,4 @@ async function main() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
     video.addEventListener("loadeddata", detect);
-};
+}
